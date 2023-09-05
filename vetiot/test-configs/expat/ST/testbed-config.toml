@@ -1,0 +1,183 @@
+##Format to add device
+#   [ItemName]
+#   Label="Add Item Label Here"
+#   Type="Provide ItemType"
+#   DefaultState = "Type default state of the device"
+#accepted types are:
+#   Switch, Number, String, Color, Group, Image, Location, Player,
+#   Contact, Dimmer, Rollershutter, DateTime
+
+[Reset]
+Label="Reset Switch"
+Type="Switch"
+DefaultState="OFF"
+
+[LivingRoomLight]
+Label="Living Room Light Status"
+Type="Switch"
+DefaultState="OFF"
+
+[IndoorMotionSensor]
+Label="Indoor Motion Sensor"
+Type="Switch"
+DefaultState="OFF"
+
+[OutdoorMotionSensor]
+Label="Outdoor Motion Sensor"
+Type="Switch"
+DefaultState="OFF"
+
+[Heating]
+Label="Heating"
+Type="Switch"
+DefaultState="OFF"
+
+[TV]
+Label="Telivision"
+Type="Switch"
+DefaultState="OFF"
+
+[CeilingFan]
+Label="Ceiling Fan"
+Type="Switch"
+DefaultState="OFF"
+
+[GarageDoorLock]
+Label="Garage Door Lock"
+Type="Switch"
+DefaultState="ON"
+
+[Presence]
+Label="Presence"
+Type="Switch"
+DefaultState="ON"
+
+[FrontDoorLock]
+Label="Front Door Lock"
+Type="Switch"
+DefaultState="ON"
+
+[LivingRoomWindowRemoteControl]
+Label="Living Room Window Remote Control"
+Type="Switch"
+DefaultState="OFF"
+
+[SurveillanceCamera]
+Label="Surveillance Camera"
+Type="Switch"
+DefaultState="ON"
+
+[Co2Detector]
+Label="Co2 Detector"
+Type="Switch"
+DefaultState="OFF"
+
+[SmokeDetector]
+Label="Smoke Detector"
+Type="Switch"
+DefaultState="OFF"
+
+[SleepMode]
+Label="Sleep Mode"
+Type="Switch"
+DefaultState="OFF"
+
+[HomeMode]
+Label="Home Mode"
+Type="Switch"
+DefaultState="ON"
+
+[AwayMode]
+Label="Away Mode"
+Type="Switch"
+DefaultState="OFF"
+
+[WaterValve]
+Label="Water Valve"
+Type="Switch"
+DefaultState="ON"
+
+[WaterLeakDetector]
+Label="Water Leak Detector"
+Type="Switch"
+DefaultState="OFF"
+
+[VacationMode]
+Label="Vacation Mode"
+Type="Switch"
+DefaultState="OFF"
+
+[BedRoomLight]
+Label="Bedroom Light"
+Type="Switch"
+DefaultState="OFF"
+
+[Ac]
+Label="Air Conditioner"
+Type="Switch"
+DefaultState="OFF"
+
+[MyAppliances]
+Label="My Appliances"
+Type="Switch"
+DefaultState="OFF"
+
+[FireSprinkler]
+Label="Fire Sprinkler"
+Type="Switch"
+DefaultState="OFF"
+
+[LivingroomTemperature]
+Label="Livingroom Temperature"
+Type="Number"
+DefaultState=70
+
+[OutsideTemperature]
+Label="Outside Temperature"
+Type="Number"
+DefaultState="70"
+
+[Illuminance]
+Label="Illuminance"
+Type="Number"
+DefaultState=60
+
+[FrontDoor]
+Label="Front Door"
+Type="Contact"
+DefaultState="OFF"
+
+[GarageDoor]
+Label="Garage Door"
+Type="Contact"
+DefaultState="OFF"
+
+[LivingRoomWindow]
+Label="Living Room Window"
+Type="Contact"
+DefaultState="OFF"
+
+[KitchenWindow]
+Label="Kitchen Window"
+Type="Contact"
+DefaultState="OFF"
+
+[BedRoomWindow]
+Label="Bedroom Window"
+Type="Contact"
+DefaultState="OFF"
+
+[KitchenDimmerLight]
+Label="Kitchen Dimmer Light"
+Type="Dimmer"
+DefaultState="OFF"
+
+[LivingRoomRollerShutter]
+Label="Living Room Rollershutter"
+Type="Rollershutter"
+DefaultState="DOWN"
+
+[CurrentDate]
+Label="Current Date and Time"
+Type="DateTime"
+DefaultState="2023-01-01'T'00:00:00"

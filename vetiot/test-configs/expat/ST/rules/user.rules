@@ -1,0 +1,219 @@
+// R1: WaterValve changes with Smoke Detection
+rule "R1"
+when
+  Item SmokeDetector received update
+then
+  logInfo("Info","rule entered: R1")
+  if (SmokeDetector.state == ON){
+	if(LivingroomTemperature.state > 135){
+    		FireSprinkler.sendCommand(ON)
+ 	}
+  }
+  else{
+    FireSprinkler.sendCommand(OFF)
+  }
+  logInfo("Info","rule exit: R1")
+end
+
+// R2: WaterValve changes with Water Leak Detector
+rule "R2"
+when
+  Item WaterLeakDetector received update
+then
+  if (WaterLeakDetector.state == ON){
+    logInfo("Info","rule entered: R2")
+    WaterValve.sendCommand(OFF)
+    logInfo("Info","rule exit: R2")
+  }
+end
+
+// R3: TV turns on at specific time
+rule "R3"
+when
+  Item CurrentDate received update
+  //Time cron "0 0 22 ? * SUN"
+then
+  val dateTime = CurrentDate.state as DateTimeType
+  val zonedDateTime = dateTime.getZonedDateTime
+  //logInfo("datetimeTest", "datetime " + zonedDateTime )
+  val hour = zonedDateTime.getHour()
+  val day = zonedDateTime.getDayOfWeek().toString()
+  //logInfo("datetime test", "hour is " + hour + " day is " + day )
+  //logInfo("datetime test", "hour is " + hour + "day is " + day )
+  if (hour == 20 && day == 'SUNDAY') {
+    logInfo("Info","rule entered: R3")
+    TV.sendCommand(ON)
+    logInfo("Info","rule exit: R3")
+  }
+end
+
+// R4: LivingRoomWindow changes state with TV on/off
+rule "R4"
+when
+  Item TV received command
+then
+  logInfo("Info","rule entered: R4")
+  if (receivedCommand == ON){
+    LivingRoomWindowRemoteControl.sendCommand(ON)
+  }
+  else{
+    LivingRoomWindowRemoteControl.sendCommand(OFF)
+  }
+  logInfo("Info","rule exit: R4")
+end
+
+// R5: Bedroom window open at specific time
+rule "R5"
+when
+  Item CurrentDate received update
+  //Time cron "0 0 6 ? * MON,TUE,WED,THU,FRI"
+then
+  val dateTime = CurrentDate.state as DateTimeType
+  val zonedDateTime = dateTime.getZonedDateTime
+  val hour = zonedDateTime.getHour()
+  val day = zonedDateTime.getDayOfWeek().toString()
+  if (hour == 6 && day != 'SATURDAY' && day != 'SUNDAY'){
+    logInfo("Info","rule entered: R5")
+    BedRoomWindow.sendCommand(OPEN)
+    logInfo("Info","rule exit: R5")
+  }
+end
+
+// R6: Bedroom window closed at specific time
+rule "R6"
+when 
+  Item CurrentDate received update
+  //Time cron "0 0 8 ? * MON,TUE,WED,THU,FRI"
+then
+  val dateTime = CurrentDate.state as DateTimeType
+  val zonedDateTime = dateTime.getZonedDateTime
+  val hour = zonedDateTime.getHour()
+  val day = zonedDateTime.getDayOfWeek().toString()
+  if (hour == 8 && day != 'SATURDAY' && day != 'SUNDAY'){
+    logInfo("Info","rule entered: R6")
+    BedRoomWindow.sendCommand(CLOSED)
+    logInfo("Info","rule exit: R6")
+  }
+end
+
+// R7: lights_on_EVENING
+rule "R7"
+when
+  Item CurrentDate received update
+  //Time cron "0 0 18 * * ?"  
+then
+  val dateTime = CurrentDate.state as DateTimeType
+  val zonedDateTime = dateTime.getZonedDateTime
+  val hour = zonedDateTime.getHour()
+  if (hour == 18){
+    logInfo("Info","rule entered: R7")
+    BedRoomLight.sendCommand(ON)
+    logInfo("Info","rule exit: R7")
+  }
+end
+
+// R8: Ceiling fan on
+rule "R8"
+when
+  Item LivingroomTemperature received update
+then
+  if(LivingroomTemperature.state > 80){
+	  logInfo("Info","rule entered: R8")
+	  CeilingFan.sendCommand(ON)
+  }
+  else{
+	  CeilingFan.sendCommand(OFF)
+  }
+  logInfo("Info","rule exit: R8")
+end
+
+// R9: light off when sleeping
+rule "R9"
+when
+  Item SleepMode received update
+then
+  if(SleepMode.state == ON){
+    logInfo("Info","rule entered: R9")
+    LivingRoomLight.sendCommand(OFF)
+    FrontDoorLock.sendCommand(OFF)
+    logInfo("Info","rule exit: R9")
+  }
+  
+end
+
+// R10: Ac on according to temperature
+rule "R10"
+when
+  Item LivingroomTemperature received update
+then
+  logInfo("Info","rule entered: R10")
+  if(LivingroomTemperature.state > 75){
+	  Ac.sendCommand(ON)
+  }
+  logInfo("Info","rule exit: R10")
+end
+
+// R11: Heater on according to temperature
+rule "R11"
+when
+  Item LivingroomTemperature received update
+then
+  if(LivingroomTemperature.state < 65){
+	  logInfo("Info","rule entered: R11")
+	  Heating.sendCommand(ON)
+	  logInfo("Info","rule exit: R11")
+  }
+end
+
+// R12: All Appliances goes off when in sleep mode
+rule "R12"
+when
+  Item SleepMode received update
+then
+  if(SleepMode.state == ON){
+    logInfo("Info","rule entered: R12")
+    MyAppliances.sendCommand(OFF)
+    logInfo("Info","rule exit: R12")
+  }
+end
+
+// R13: Front door unlocked by getting motion
+rule "R13"
+when
+    Item IndoorMotionSensor received update
+then
+    logInfo("Info","rule entered: R13")
+    if (IndoorMotionSensor.state == ON) {
+        FrontDoorLock.sendCommand(OFF)
+    }
+    logInfo("Info","rule exit: R13")
+end
+
+// R14: Garage door open automatically
+rule "R14"
+when
+    Item DistanceFromHome changed
+then
+    if (DistanceFromHome.state < 150) {
+      logInfo("Info","rule entered: R14")
+        if(GarageDoor.state == CLOSED) {
+            GarageDoorLock.sendCommand(OFF)
+        }
+      logInfo("Info","rule entered: R14")
+    }
+end
+
+// R15: Front door open according to garage door
+rule "R15"
+when
+    Item GarageDoor received update
+then
+    logInfo("Info","rule entered: R15")
+    if(GarageDoor.state == OPEN) {
+        FrontDoorLock.sendCommand(OFF)
+    }
+    logInfo("Info","rule exit: R15")
+end
+
+
+

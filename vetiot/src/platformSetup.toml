@@ -1,0 +1,52 @@
+[OHItems]
+    [OHItems.Color]
+    command=['INCREASE', 'DECREASE','ON', 'OFF', 'integer','hsb']
+    update=['ON', 'OFF', 'integer','hsb']
+
+    [OHItems.Contact]
+    command=[]
+    update=['OPEN','CLOSED']
+
+    [OHItems.DateTime]
+    command=['datetime']
+    update=['datetime']
+
+    [OHItems.Dimmer]
+    command=['INCREASE', 'DECREASE','ON', 'OFF', 'integer']
+    update=['ON', 'OFF', 'integer']
+
+    [OHItems.Group]
+    command=[]
+    update=[]
+
+    [OHItems.Image]
+    command=[]
+    update=[]
+
+    [OHItems.Location]
+    command=['point']
+    update=['point']
+
+    [OHItems.Number]
+    command=['decimal']
+    update=['decimal']
+
+    [OHItems.Number2]
+    command=['integer']
+    update=['integer']
+
+    [OHItems.Player]
+    command=['PLAY','PAUSE','NEXT','PREVIOUS','REWIND','FASTFORWARD']
+    update=[]
+
+    [OHItems.Rollershutter]
+    command=['STOP','MOVE','UP','DOWN','integer']
+    update=['UP','DOWN','integer']
+
+    [OHItems.String]
+    command=['string']
+    update=['string']
+
+    [OHItems.Switch]
+    command=['ON','OFF']
+    update=['ON','OFF']

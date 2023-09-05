@@ -1,0 +1,468 @@
+import java.util.concurrent.locks.ReentrantLock
+import org.openhab.core.types.State
+
+val ReentrantLock lock  = new ReentrantLock()
+
+val policy_check = [String my_rule_name, GenericItem my_triggered_event_device, State my_triggered_event, String my_trigger_type, GenericItem my_action_device, State my_action_command |
+
+	val action_device = my_action_device
+	val action_command = my_action_command
+	val WaterLeakDetector_state = if (WaterLeakDetector == my_action_device) my_action_command else WaterLeakDetector.state
+	val SmokeDetector_state = if (SmokeDetector == my_action_device) my_action_command else SmokeDetector.state
+	val LivingRoomWindowRemoteControl_state = if (LivingRoomWindowRemoteControl == my_action_device) my_action_command else LivingRoomWindowRemoteControl.state
+	val BedRoomLight_state = if (BedRoomLight == my_action_device) my_action_command else BedRoomLight.state
+	val LivingRoomLight_state = if (LivingRoomLight == my_action_device) my_action_command else LivingRoomLight.state
+	val BedRoomWindow_state = if (BedRoomWindow == my_action_device) my_action_command else BedRoomWindow.state
+	val SleepMode_state = if (SleepMode == my_action_device) my_action_command else SleepMode.state
+	val SurveillanceCamera_state = if (SurveillanceCamera == my_action_device) my_action_command else SurveillanceCamera.state
+	val VacationMode_state = if (VacationMode == my_action_device) my_action_command else VacationMode.state
+	val FrontDoorLock_state = if (FrontDoorLock == my_action_device) my_action_command else FrontDoorLock.state
+	val Heating_state = if (Heating == my_action_device) my_action_command else Heating.state
+	val Ac_state = if (Ac == my_action_device) my_action_command else Ac.state
+	val CeilingFan_state = if (CeilingFan == my_action_device) my_action_command else CeilingFan.state
+	val HomeMode_state = if (HomeMode == my_action_device) my_action_command else HomeMode.state
+
+	val PI1 = ! ( action_device == WaterValve && action_command == OFF && WaterLeakDetector_state == ON ) || ! ( SmokeDetector_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI1) "permitted!" else " denied!")
+	val PI2 = ! ( LivingRoomWindowRemoteControl_state == ON || BedRoomLight_state == ON || LivingRoomLight_state == ON || BedRoomWindow_state == OPEN ) || ! ( SleepMode_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI2) "permitted!" else " denied!")
+	val PI3 = ! ( true ) || ! ( SurveillanceCamera_state == OFF )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI3) "permitted!" else " denied!")
+	val PI4 = ! ( BedRoomWindow_state == OPEN || BedRoomLight_state == ON ) || ! ( VacationMode_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI4) "permitted!" else " denied!")
+	val PI5 = ! ( true ) || ! ( FrontDoorLock_state == OFF )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI5) "permitted!" else " denied!")
+	val PI6 = ! ( Heating_state == ON ) || ! ( Ac_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI6) "permitted!" else " denied!")
+	val PI7 = ! ( CeilingFan_state == ON || LivingRoomWindowRemoteControl_state == ON || BedRoomLight_state == ON || LivingRoomLight_state == ON || BedRoomWindow_state == OPEN ) || ( HomeMode_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI7) "permitted!" else " denied!")
+	val PI8 = ! ( LivingRoomWindowRemoteControl_state == ON ) || ( Ac_state == OFF && Heating_state == OFF )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI8) "permitted!" else " denied!")
+
+	val permission = PI1 && PI2 && PI3 && PI4 && PI5 && PI6 && PI7 && PI8 
+
+	logInfo("PolicyEnforcement", "Action " + my_action_command + ", on device " + my_action_device.getName() + if(permission) " permitted!" else " denied!")
+
+	return permission
+]
+
+// R1: WaterValve changes with Smoke Detection
+rule "R1"
+when
+  Item SmokeDetector received update
+then
+	val rule_name = 'r1'
+	val triggered_event_device = SmokeDetector
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  logInfo("Info","rule entered: R1")
+  if (SmokeDetector.state == ON){
+	if(LivingroomTemperature.state > 135){
+    		lock.lock()
+    		try {
+    			if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, FireSprinkler, ON)) {
+		    		FireSprinkler.sendCommand(ON)
+    			}
+    		} finally{
+    			lock.unlock()
+    		}
+ 	}
+  }
+  else{
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, FireSprinkler, OFF)) {
+		    FireSprinkler.sendCommand(OFF)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+  }
+  logInfo("Info","rule exit: R1")
+end
+
+// R2: WaterValve changes with Water Leak Detector
+rule "R2"
+when
+  Item WaterLeakDetector received update
+then
+	val rule_name = 'r2'
+	val triggered_event_device = WaterLeakDetector
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  if (WaterLeakDetector.state == ON){
+    logInfo("Info","rule entered: R2")
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, WaterValve, OFF)) {
+		    WaterValve.sendCommand(OFF)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+    logInfo("Info","rule exit: R2")
+  }
+end
+
+// R3: TV turns on at specific time
+rule "R3"
+when
+  Item CurrentDate received update
+  //Time cron "0 0 22 ? * SUN"
+then
+	val rule_name = 'r3'
+	val triggered_event_device = CurrentDate
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  val dateTime = CurrentDate.state as DateTimeType
+  val zonedDateTime = dateTime.getZonedDateTime
+  //logInfo("datetimeTest", "datetime " + zonedDateTime )
+  val hour = zonedDateTime.getHour()
+  val day = zonedDateTime.getDayOfWeek().toString()
+  //logInfo("datetime test", "hour is " + hour + " day is " + day )
+  //logInfo("datetime test", "hour is " + hour + "day is " + day )
+  if (hour == 20 && day == 'SUNDAY') {
+    logInfo("Info","rule entered: R3")
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, TV, ON)) {
+		    TV.sendCommand(ON)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+    logInfo("Info","rule exit: R3")
+  }
+end
+
+// R4: LivingRoomWindow changes state with TV on/off
+rule "R4"
+when
+  Item TV received command
+then
+	val rule_name = 'r4'
+	val triggered_event_device = TV
+	val trigger_type = 'command'
+	val triggered_event = NULL
+  logInfo("Info","rule entered: R4")
+  if (receivedCommand == ON){
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, LivingRoomWindowRemoteControl, ON)) {
+		    LivingRoomWindowRemoteControl.sendCommand(ON)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+  }
+  else{
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, LivingRoomWindowRemoteControl, OFF)) {
+		    LivingRoomWindowRemoteControl.sendCommand(OFF)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+  }
+  logInfo("Info","rule exit: R4")
+end
+
+// R5: Bedroom window open at specific time
+rule "R5"
+when
+  Item CurrentDate received update
+  //Time cron "0 0 6 ? * MON,TUE,WED,THU,FRI"
+then
+	val rule_name = 'r5'
+	val triggered_event_device = CurrentDate
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  val dateTime = CurrentDate.state as DateTimeType
+  val zonedDateTime = dateTime.getZonedDateTime
+  val hour = zonedDateTime.getHour()
+  val day = zonedDateTime.getDayOfWeek().toString()
+  if (hour == 6 && day != 'SATURDAY' && day != 'SUNDAY'){
+    logInfo("Info","rule entered: R5")
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, BedRoomWindow, OPEN)) {
+		    BedRoomWindow.sendCommand(OPEN)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+    logInfo("Info","rule exit: R5")
+  }
+end
+
+// R6: Bedroom window closed at specific time
+rule "R6"
+when 
+  Item CurrentDate received update
+  //Time cron "0 0 8 ? * MON,TUE,WED,THU,FRI"
+then
+	val rule_name = 'r6'
+	val triggered_event_device = CurrentDate
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  val dateTime = CurrentDate.state as DateTimeType
+  val zonedDateTime = dateTime.getZonedDateTime
+  val hour = zonedDateTime.getHour()
+  val day = zonedDateTime.getDayOfWeek().toString()
+  if (hour == 8 && day != 'SATURDAY' && day != 'SUNDAY'){
+    logInfo("Info","rule entered: R6")
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, BedRoomWindow, CLOSED)) {
+		    BedRoomWindow.sendCommand(CLOSED)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+    logInfo("Info","rule exit: R6")
+  }
+end
+
+// R7: lights_on_EVENING
+rule "R7"
+when
+  Item CurrentDate received update
+  //Time cron "0 0 18 * * ?"  
+then
+	val rule_name = 'r7'
+	val triggered_event_device = CurrentDate
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  val dateTime = CurrentDate.state as DateTimeType
+  val zonedDateTime = dateTime.getZonedDateTime
+  val hour = zonedDateTime.getHour()
+  if (hour == 18){
+    logInfo("Info","rule entered: R7")
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, BedRoomLight, ON)) {
+		    BedRoomLight.sendCommand(ON)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+    logInfo("Info","rule exit: R7")
+  }
+end
+
+// R8: Ceiling fan on
+rule "R8"
+when
+  Item LivingroomTemperature received update
+then
+	val rule_name = 'r8'
+	val triggered_event_device = LivingroomTemperature
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  if(LivingroomTemperature.state > 80){
+	  logInfo("Info","rule entered: R8")
+	  lock.lock()
+	  try {
+	  	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, CeilingFan, ON)) {
+			  CeilingFan.sendCommand(ON)
+	  	}
+	  } finally{
+	  	lock.unlock()
+	  }
+  }
+  else{
+	  lock.lock()
+	  try {
+	  	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, CeilingFan, OFF)) {
+			  CeilingFan.sendCommand(OFF)
+	  	}
+	  } finally{
+	  	lock.unlock()
+	  }
+  }
+  logInfo("Info","rule exit: R8")
+end
+
+// R9: light off when sleeping
+rule "R9"
+when
+  Item SleepMode received update
+then
+	val rule_name = 'r9'
+	val triggered_event_device = SleepMode
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  if(SleepMode.state == ON){
+    logInfo("Info","rule entered: R9")
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, LivingRoomLight, OFF)) {
+		    LivingRoomLight.sendCommand(OFF)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, FrontDoorLock, OFF)) {
+		    FrontDoorLock.sendCommand(OFF)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+    logInfo("Info","rule exit: R9")
+  }
+  
+end
+
+// R10: Ac on according to temperature
+rule "R10"
+when
+  Item LivingroomTemperature received update
+then
+	val rule_name = 'r10'
+	val triggered_event_device = LivingroomTemperature
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  logInfo("Info","rule entered: R10")
+  if(LivingroomTemperature.state > 75){
+	  lock.lock()
+	  try {
+	  	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, Ac, ON)) {
+			  Ac.sendCommand(ON)
+	  	}
+	  } finally{
+	  	lock.unlock()
+	  }
+  }
+  logInfo("Info","rule exit: R10")
+end
+
+// R11: Heater on according to temperature
+rule "R11"
+when
+  Item LivingroomTemperature received update
+then
+	val rule_name = 'r11'
+	val triggered_event_device = LivingroomTemperature
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  if(LivingroomTemperature.state < 65){
+	  logInfo("Info","rule entered: R11")
+	  lock.lock()
+	  try {
+	  	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, Heating, ON)) {
+			  Heating.sendCommand(ON)
+	  	}
+	  } finally{
+	  	lock.unlock()
+	  }
+	  logInfo("Info","rule exit: R11")
+  }
+end
+
+// R12: All Appliances goes off when in sleep mode
+rule "R12"
+when
+  Item SleepMode received update
+then
+	val rule_name = 'r12'
+	val triggered_event_device = SleepMode
+	val trigger_type = 'update'
+	val triggered_event = NULL
+  if(SleepMode.state == ON){
+    logInfo("Info","rule entered: R12")
+    lock.lock()
+    try {
+    	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, MyAppliances, OFF)) {
+		    MyAppliances.sendCommand(OFF)
+    	}
+    } finally{
+    	lock.unlock()
+    }
+    logInfo("Info","rule exit: R12")
+  }
+end
+
+// R13: Front door unlocked by getting motion
+rule "R13"
+when
+    Item IndoorMotionSensor received update
+then
+	val rule_name = 'r13'
+	val triggered_event_device = IndoorMotionSensor
+	val trigger_type = 'update'
+	val triggered_event = NULL
+    logInfo("Info","rule entered: R13")
+    if (IndoorMotionSensor.state == ON) {
+        lock.lock()
+        try {
+        	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, FrontDoorLock, OFF)) {
+		        FrontDoorLock.sendCommand(OFF)
+        	}
+        } finally{
+        	lock.unlock()
+        }
+    }
+    logInfo("Info","rule exit: R13")
+end
+
+// R14: Garage door open automatically
+rule "R14"
+when
+    Item DistanceFromHome changed
+then
+	val rule_name = 'r14'
+	val triggered_event_device = DistanceFromHome
+	val trigger_type = 'changed'
+	val triggered_event = NULL
+    if (DistanceFromHome.state < 150) {
+      logInfo("Info","rule entered: R14")
+        if(GarageDoor.state == CLOSED) {
+            lock.lock()
+            try {
+            	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, GarageDoorLock, OFF)) {
+		            GarageDoorLock.sendCommand(OFF)
+            	}
+            } finally{
+            	lock.unlock()
+            }
+        }
+      logInfo("Info","rule entered: R14")
+    }
+end
+
+// R15: Front door open according to garage door
+rule "R15"
+when
+    Item GarageDoor received update
+then
+	val rule_name = 'r15'
+	val triggered_event_device = GarageDoor
+	val trigger_type = 'update'
+	val triggered_event = NULL
+    logInfo("Info","rule entered: R15")
+    if(GarageDoor.state == OPEN) {
+        lock.lock()
+        try {
+        	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, FrontDoorLock, OFF)) {
+		        FrontDoorLock.sendCommand(OFF)
+        	}
+        } finally{
+        	lock.unlock()
+        }
+    }
+    logInfo("Info","rule exit: R15")
+end
+
+
+

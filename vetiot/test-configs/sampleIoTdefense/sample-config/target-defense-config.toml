@@ -1,0 +1,7 @@
+[defense-info]
+name="expat"
+hosts = ["au"]
+
+#[defense-info.connectionInfo] #connection info for iotguard server.
+#ip="localhost"
+#port=8090

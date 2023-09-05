@@ -1,0 +1,37 @@
+rule "ControlGarageDoor"
+when
+    Item GarageDoorLock received command
+then
+    if (receivedCommand == OFF) {
+        GarageDoor.postUpdate(OPEN)
+    }
+    else {
+        GarageDoor.postUpdate(CLOSED)
+    }
+end
+
+rule "ControlLivingRoomWindow"
+when
+    Item LivingRoomWindowRemoteControl received command
+then
+    if (receivedCommand == OFF) {
+        LivingRoomWindow.postUpdate(CLOSED)
+    }
+    else {
+        LivingRoomWindow.postUpdate(OPEN)
+    }
+end
+
+rule "Appliances"
+when
+  Item MyAppliances received command
+then
+  if(receivedCommand == OFF){
+   logInfo("Info","rule entered")
+   BedRoomLight.sendCommand(OFF)
+   TV.sendCommand(OFF)
+   SurveillanceCamera.sendCommand(OFF)
+   CeilingFan.sendCommand(OFF)
+   logInfo("Info","rule exit")
+  }
+end

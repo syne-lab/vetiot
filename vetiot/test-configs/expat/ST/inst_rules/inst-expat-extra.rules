@@ -1,0 +1,161 @@
+import java.util.concurrent.locks.ReentrantLock
+import org.openhab.core.types.State
+
+val ReentrantLock lock  = new ReentrantLock()
+
+val policy_check = [String my_rule_name, GenericItem my_triggered_event_device, State my_triggered_event, String my_trigger_type, GenericItem my_action_device, State my_action_command |
+
+	val action_device = my_action_device
+	val action_command = my_action_command
+	val WaterLeakDetector_state = if (WaterLeakDetector == my_action_device) my_action_command else WaterLeakDetector.state
+	val SmokeDetector_state = if (SmokeDetector == my_action_device) my_action_command else SmokeDetector.state
+	val LivingRoomWindowRemoteControl_state = if (LivingRoomWindowRemoteControl == my_action_device) my_action_command else LivingRoomWindowRemoteControl.state
+	val BedRoomLight_state = if (BedRoomLight == my_action_device) my_action_command else BedRoomLight.state
+	val LivingRoomLight_state = if (LivingRoomLight == my_action_device) my_action_command else LivingRoomLight.state
+	val BedRoomWindow_state = if (BedRoomWindow == my_action_device) my_action_command else BedRoomWindow.state
+	val SleepMode_state = if (SleepMode == my_action_device) my_action_command else SleepMode.state
+	val SurveillanceCamera_state = if (SurveillanceCamera == my_action_device) my_action_command else SurveillanceCamera.state
+	val VacationMode_state = if (VacationMode == my_action_device) my_action_command else VacationMode.state
+	val FrontDoorLock_state = if (FrontDoorLock == my_action_device) my_action_command else FrontDoorLock.state
+	val Heating_state = if (Heating == my_action_device) my_action_command else Heating.state
+	val Ac_state = if (Ac == my_action_device) my_action_command else Ac.state
+	val CeilingFan_state = if (CeilingFan == my_action_device) my_action_command else CeilingFan.state
+	val HomeMode_state = if (HomeMode == my_action_device) my_action_command else HomeMode.state
+
+	val PI1 = ! ( action_device == WaterValve && action_command == OFF && WaterLeakDetector_state == ON ) || ! ( SmokeDetector_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI1) "permitted!" else " denied!")
+	val PI2 = ! ( LivingRoomWindowRemoteControl_state == ON || BedRoomLight_state == ON || LivingRoomLight_state == ON || BedRoomWindow_state == OPEN ) || ! ( SleepMode_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI2) "permitted!" else " denied!")
+	val PI3 = ! ( true ) || ! ( SurveillanceCamera_state == OFF )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI3) "permitted!" else " denied!")
+	val PI4 = ! ( BedRoomWindow_state == OPEN || BedRoomLight_state == ON ) || ! ( VacationMode_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI4) "permitted!" else " denied!")
+	val PI5 = ! ( true ) || ! ( FrontDoorLock_state == OFF )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI5) "permitted!" else " denied!")
+	val PI6 = ! ( Heating_state == ON ) || ! ( Ac_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI6) "permitted!" else " denied!")
+	val PI7 = ! ( CeilingFan_state == ON || LivingRoomWindowRemoteControl_state == ON || BedRoomLight_state == ON || LivingRoomLight_state == ON || BedRoomWindow_state == OPEN ) || ( HomeMode_state == ON )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI7) "permitted!" else " denied!")
+	val PI8 = ! ( LivingRoomWindowRemoteControl_state == ON ) || ( Ac_state == OFF && Heating_state == OFF )
+
+	logInfo("PolicyEnforcement", "Policy result" + if(PI8) "permitted!" else " denied!")
+
+	val permission = PI1 && PI2 && PI3 && PI4 && PI5 && PI6 && PI7 && PI8 
+
+	logInfo("PolicyEnforcement", "Action " + my_action_command + ", on device " + my_action_device.getName() + if(permission) " permitted!" else " denied!")
+
+	return permission
+]
+
+rule "ControlGarageDoor"
+when
+    Item GarageDoorLock received command
+then
+	val rule_name = 'controlgaragedoor'
+	val triggered_event_device = GarageDoorLock
+	val trigger_type = 'command'
+	val triggered_event = NULL
+    if (receivedCommand == OFF) {
+        lock.lock()
+        try {
+        	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, GarageDoor, OPEN)) {
+		        GarageDoor.postUpdate(OPEN)
+        	}
+        } finally{
+        	lock.unlock()
+        }
+    }
+    else {
+        lock.lock()
+        try {
+        	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, GarageDoor, CLOSED)) {
+		        GarageDoor.postUpdate(CLOSED)
+        	}
+        } finally{
+        	lock.unlock()
+        }
+    }
+end
+
+rule "ControlLivingRoomWindow"
+when
+    Item LivingRoomWindowRemoteControl received command
+then
+	val rule_name = 'controllivingroomwindow'
+	val triggered_event_device = LivingRoomWindowRemoteControl
+	val trigger_type = 'command'
+	val triggered_event = NULL
+    if (receivedCommand == OFF) {
+        lock.lock()
+        try {
+        	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, LivingRoomWindow, CLOSED)) {
+		        LivingRoomWindow.postUpdate(CLOSED)
+        	}
+        } finally{
+        	lock.unlock()
+        }
+    }
+    else {
+        lock.lock()
+        try {
+        	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, LivingRoomWindow, OPEN)) {
+		        LivingRoomWindow.postUpdate(OPEN)
+        	}
+        } finally{
+        	lock.unlock()
+        }
+    }
+end
+
+rule "Appliances"
+when
+  Item MyAppliances received command
+then
+	val rule_name = 'appliances'
+	val triggered_event_device = MyAppliances
+	val trigger_type = 'command'
+	val triggered_event = NULL
+  if(receivedCommand == OFF){
+   logInfo("Info","rule entered")
+   lock.lock()
+   try {
+   	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, BedRoomLight, OFF)) {
+		   BedRoomLight.sendCommand(OFF)
+   	}
+   } finally{
+   	lock.unlock()
+   }
+   lock.lock()
+   try {
+   	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, TV, OFF)) {
+		   TV.sendCommand(OFF)
+   	}
+   } finally{
+   	lock.unlock()
+   }
+   lock.lock()
+   try {
+   	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, SurveillanceCamera, OFF)) {
+		   SurveillanceCamera.sendCommand(OFF)
+   	}
+   } finally{
+   	lock.unlock()
+   }
+   lock.lock()
+   try {
+   	if (policy_check.apply(rule_name, triggered_event_device, triggered_event, trigger_type, CeilingFan, OFF)) {
+		   CeilingFan.sendCommand(OFF)
+   	}
+   } finally{
+   	lock.unlock()
+   }
+   logInfo("Info","rule exit")
+  }
+end

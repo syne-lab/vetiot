@@ -1,0 +1,38 @@
+##Format to add device
+#   [ItemName]
+#   Label="Add Item Label Here"
+#   Type="Provide ItemType"
+#   DefaultState = "Type default state of the device"
+#accepted types are:
+#   Switch, Number, String, Color, Group, Image, Location, Player,
+#   Contact, Dimmer, Rollershutter, DateTime
+
+[SampleSwitch]
+Label="Sample Switch"
+Type="Switch"
+DefaultState="OFF"
+
+[SampleNumber]
+Label="Livingroom Temperature"
+Type="Number"
+DefaultState=70
+
+[SampleContact]
+Label="Front Door"
+Type="Contact"
+DefaultState="OFF"
+
+[SampleDimmer]
+Label="Kitchen Dimmer Light"
+Type="Dimmer"
+DefaultState="OFF"
+
+[SampleRollerShutter]
+Label="Living Room Rollershutter"
+Type="Rollershutter"
+DefaultState="DOWN"
+
+[SampleDateTime]
+Label="Current Date and Time"
+Type="DateTime"
+DefaultState="2023-01-01'T'00:00:00"

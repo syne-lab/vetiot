@@ -1,0 +1,5 @@
+[au]
+api-token = 'oh.newtoken.7SQJZguhAS7IBcPUdtQasFZN2ezhqn2yLAYROUPKD2qqnwR4zhChyD0xbWSWqrgiCKMtpY14YQyt3cd8ZBqJA'
+ip-address = 'localhost'
+oh-config-dir = 'env-setup/openhab-3.2.0/conf/'
+port = 8080

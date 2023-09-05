@@ -1,0 +1,10 @@
+.vagrant/
+openhab-3.2.0/
+config/
+generated/
+*.png
+!generated/ReadMe.md
+__pycache__/
+venv/
+*.deb
+*.pyc
